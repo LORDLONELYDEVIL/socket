@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Group Chat</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            flex-direction: column;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        #chat-container {
+            width: 400px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            background-color: #fff;
+            padding: 20px;
+        }
+        #error-container {
+            color: red;
+            margin-bottom: 10px;
+        }
+        input[type="text"] {
+            width: calc(100% - 22px);
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            background-color: #007bff;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #message-container {
+            margin-top: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+            border-top: 1px solid #ddd;
+            padding-top: 10px;
+        }
+        .message {
+            padding: 5px 10px;
+            border-bottom: 1px solid #ddd;
+        }
+        .message b {
+            color: #007bff;
+        }
+    </style>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        var socket = io();
+
+        function setUsername() {
+            socket.emit('setUsername', document.getElementById('name').value);
+        }
+
+        var user;
+        socket.on('userExists', function(data) {
+            document.getElementById('error-container').innerHTML = data;
+        });
+
+        socket.on('userSet', function(data) {
+            user = data.username;
+            document.getElementById('chat-container').innerHTML = '<h1>Real Time Group Chat</h1>\
+            <input type="text" id="message" placeholder="Enter message">\
+            <button type="button" onclick="sendMessage()">Send</button>\
+            <div id="message-container"></div>';
+        });
+
+        function sendMessage() {
+            var msg = document.getElementById('message').value;
+            if (msg) {
+                socket.emit('msg', { message: msg, user: user });
+            }
+        }
+
+        socket.on('newmsg', function(data) {
+            if (user) {
+                var messageContainer = document.getElementById('message-container');
+                var messageDiv = document.createElement('div');
+                messageDiv.classList.add('message');
+                messageDiv.innerHTML = '<b>' + data.user + '</b>: ' + data.message;
+                messageContainer.appendChild(messageDiv);
+                messageContainer.scrollTop = messageContainer.scrollHeight; // Auto-scroll to the latest message
+            }
+        });
+    </script>
+</head>
+<body>
+    <div id="chat-container">
+        <h1>Real Time Group Chat</h1>
+        <div id="error-container"></div>
+        <input id="name" type="text" placeholder="Enter your name!">
+        <button type="button" onclick="setUsername()">Let me chat!</button>
+    </div>
+</body>
+</html>
+
+
+
